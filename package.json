@@ -1,0 +1,16 @@
+{
+  "name": "imgdivider",
+  "version": "1.0.0",
+  "description": "Divide cualquier imagen en partes perfectas. Totalmente offline.",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo 'No tests configured'"
+  },
+  "keywords": ["image", "splitter", "pwa", "offline", "canvas", "instagram"],
+  "author": "Angel",
+  "license": "Apache-2.0",
+  "devDependencies": {},
+  "dependencies": {
+    "jszip": "^3.10.1"
+  }
+}
