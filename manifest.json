@@ -4,8 +4,8 @@
   "description": "Divide cualquier imagen en partes perfectas. Totalmente offline.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#070707",
-  "theme_color": "#070707",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
   "orientation": "any",
   "scope": "/",
   "icons": [
