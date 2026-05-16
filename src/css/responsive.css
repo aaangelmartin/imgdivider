@@ -1,32 +1,43 @@
 /* =============================================
-   ImgDivider — Responsive Tweaks
+   ImgDivider — Responsive
    ============================================= */
 
 @media (max-width: 720px) {
-  .editor-toolbar { padding: 8px 12px 10px; }
-  .toolbar-row--inputs { gap: 6px; }
-  .input-pair input, .input-pair select { width: 72px; padding: 5px 6px; font-size: 0.78rem; }
-  .input-pair--small input { width: 44px; }
-  .preset-chip { padding: 4px 8px; font-size: 0.7rem; }
-  .parts-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
-  .app-header { padding: 0 12px; height: 48px; }
-  .logo-text { font-size: 1rem; }
+  .app-header { padding: 0 16px; }
+
+  #stepUpload { padding: 20px 16px; }
+  #stepUpload > .step-mark { margin-bottom: 14px; }
+  .upload-zone { padding: 40px 20px; }
+  .upload-text { font-size: 1.25rem; }
+
+  .editor-preview { padding: 10px 16px 6px; }
+  .editor-toolbar { padding: 8px 16px 12px; gap: 8px; }
+  .toolbar-row--inputs { gap: 10px; }
+  .input-pair input, .input-pair select { width: 72px; font-size: 0.77rem; }
+  .input-pair--small input  { width: 44px; }
+  .input-pair--small select { width: 44px; }
+  .preset-chip { padding: 3px 8px; font-size: 0.67rem; }
+
+  #stepDownload { padding: 12px 16px 16px; }
+  .parts-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 7px; }
 }
 
 @media (max-width: 480px) {
-  .toolbar-row { gap: 6px; }
+  .step-mark { gap: 5px; }
   .toolbar-label { display: none; }
-  .input-pair label { font-size: 0.55rem; }
+  .input-pair label { font-size: 0.52rem; }
   .input-pair input, .input-pair select { width: 64px; }
-  .input-pair--small input { width: 40px; }
-  .preset-chips { gap: 4px; }
-  .preset-chip { padding: 3px 6px; font-size: 0.68rem; }
-  .upload-zone { padding: 28px 16px; }
-  .editor-preview { padding: 8px 12px; }
+  .input-pair--small input  { width: 40px; }
+  .input-pair--small select { width: 40px; }
+  .preset-chips { gap: 3px; }
+  .preset-chip { padding: 3px 6px; font-size: 0.64rem; }
+  .upload-zone { padding: 32px 16px; }
+  .upload-text { font-size: 1.1rem; }
 }
 
 @media (pointer: coarse) {
-  .btn { min-height: 40px; }
+  .btn        { min-height: 40px; }
+  .back-link  { min-height: 36px; display: flex; align-items: center; }
   .preset-chip { min-height: 32px; display: flex; align-items: center; }
   input, select { font-size: 16px !important; }
 }
