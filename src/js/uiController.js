@@ -314,8 +314,8 @@ export class UIController {
     this.dom.btnDownloadAll.textContent = 'Generando...';
 
     try {
-      const baseName = this.currentFile ? this.currentFile.name.replace(/\.[^.]+$/, '') : 'imagen';
-      await this.exporter.downloadZip(this.parts, `${baseName}_dividida.zip`);
+      const baseName = this.currentFile ? this.currentFile.name.replace(/\.[^.]+$/, '') : 'image';
+      await this.exporter.downloadZip(this.parts, `ImgDivider_${baseName}.zip`);
       this.showToast('ZIP descargado', 'success');
     } catch (err) {
       this.showToast('Error ZIP: ' + err.message, 'error');
