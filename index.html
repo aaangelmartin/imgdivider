@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" data-theme="dark">
+<html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -12,6 +12,10 @@
   <link rel="icon" type="image/png" sizes="32x32" href="src/assets/icons/favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="src/assets/icons/favicon-16.png">
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="src/css/main.css">
   <link rel="stylesheet" href="src/css/components.css">
   <link rel="stylesheet" href="src/css/responsive.css">
@@ -20,37 +24,38 @@
   <div class="app">
     <header class="app-header">
       <div class="logo">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="3" width="7" height="7" rx="1.5"/>
-          <rect x="14" y="3" width="7" height="7" rx="1.5"/>
-          <rect x="3" y="14" width="7" height="7" rx="1.5"/>
-          <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+        <svg viewBox="0 0 20 20" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="1" y="1" width="7" height="7" rx="1.5"/>
+          <rect x="12" y="1" width="7" height="7" rx="1.5"/>
+          <rect x="1" y="12" width="7" height="7" rx="1.5"/>
+          <rect x="12" y="12" width="7" height="7" rx="1.5"/>
         </svg>
         <span class="logo-text">ImgDivider</span>
-      </div>
-      <div class="header-actions">
-        <button id="themeToggle" class="icon-btn" aria-label="Cambiar tema" title="Cambiar tema">
-          <svg id="themeIcon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
-          </svg>
-        </button>
+        <span class="logo-dot"></span>
       </div>
     </header>
 
     <main class="app-main">
+
       <!-- STEP 1: UPLOAD -->
       <section id="stepUpload" class="step step--active">
+        <div class="step-mark">
+          <span class="step-num">01</span>
+          <span class="step-sep">—</span>
+          <span class="step-label">Subir</span>
+        </div>
         <div class="upload-zone" id="uploadZone">
           <input type="file" id="fileInput" class="file-input" accept="image/*" aria-label="Seleccionar imagen">
           <div class="upload-zone-content">
-            <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="upload-icon">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="17 8 12 3 7 8"/>
-              <line x1="12" y1="3" x2="12" y2="15"/>
+            <svg viewBox="0 0 20 20" width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" class="upload-icon">
+              <rect x="1" y="1" width="7" height="7" rx="1.5"/>
+              <rect x="12" y="1" width="7" height="7" rx="1.5"/>
+              <rect x="1" y="12" width="7" height="7" rx="1.5"/>
+              <rect x="12" y="12" width="7" height="7" rx="1.5"/>
             </svg>
-            <p class="upload-text">Arrastra tu imagen aquí</p>
-            <p class="upload-sub">o haz clic para seleccionar</p>
-            <p class="upload-formats">JPG · PNG · WEBP · GIF · BMP · SVG</p>
+            <p class="upload-text">Suelta una imagen</p>
+            <p class="upload-sub">o pulsa para seleccionar</p>
+            <p class="upload-formats">JPG &middot; PNG &middot; WEBP &middot; GIF &middot; BMP &middot; SVG</p>
           </div>
         </div>
       </section>
@@ -59,10 +64,15 @@
       <section id="stepConfigure" class="step">
         <div class="editor-layout">
           <div class="editor-preview" id="editorPreview">
+            <div class="step-mark step-mark--sm">
+              <span class="step-num">02</span>
+              <span class="step-sep">—</span>
+              <span class="step-label">Configurar</span>
+            </div>
             <div class="canvas-wrapper" id="canvasWrapper">
               <canvas id="previewCanvas"></canvas>
               <div class="canvas-placeholder" id="canvasPlaceholder">
-                <p>Cargando imagen...</p>
+                <p>Cargando imagen&hellip;</p>
               </div>
             </div>
             <div class="preview-info" id="previewInfo" style="display:none;">
@@ -127,7 +137,7 @@
             </div>
 
             <div class="toolbar-row toolbar-row--actions">
-              <button id="btnBackUpload" class="btn btn--secondary btn--sm">Cambiar imagen</button>
+              <button id="btnBackUpload" class="back-link">&larr; Cambiar imagen</button>
               <button id="btnPreview" class="btn btn--primary btn--sm">Dividir y descargar</button>
             </div>
           </div>
@@ -138,16 +148,24 @@
       <section id="stepDownload" class="step">
         <div class="download-layout">
           <div class="download-header">
-            <button id="btnBackConfig" class="btn btn--secondary btn--sm">← Editar</button>
+            <div class="download-header-left">
+              <div class="step-mark step-mark--sm">
+                <span class="step-num">03</span>
+                <span class="step-sep">—</span>
+                <span class="step-label">Descargar</span>
+              </div>
+              <button id="btnBackConfig" class="back-link">&larr; Editar</button>
+            </div>
             <button id="btnDownloadAll" class="btn btn--primary btn--sm">Descargar ZIP</button>
           </div>
           <div class="parts-grid" id="partsGrid"></div>
         </div>
       </section>
+
     </main>
 
     <footer class="app-footer">
-      <p>ImgDivider &mdash; 100% offline &middot; tu imagen nunca sale del dispositivo</p>
+      <span>ImgDivider &mdash; 100% offline &middot; tu imagen nunca sale del dispositivo</span>
     </footer>
   </div>
 

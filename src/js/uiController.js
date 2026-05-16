@@ -20,42 +20,39 @@ export class UIController {
     this.cacheDOM();
     this.bindEvents();
     this.renderPresets();
-    this.applyTheme();
     this.selectPreset('instagram-post');
   }
 
   cacheDOM() {
     this.dom = {
-      stepUpload: document.getElementById('stepUpload'),
+      stepUpload:    document.getElementById('stepUpload'),
       stepConfigure: document.getElementById('stepConfigure'),
-      stepDownload: document.getElementById('stepDownload'),
-      uploadZone: document.getElementById('uploadZone'),
-      fileInput: document.getElementById('fileInput'),
-      presetGrid: document.getElementById('presetGrid'),
-      targetWidth: document.getElementById('targetWidth'),
-      targetHeight: document.getElementById('targetHeight'),
-      cols: document.getElementById('cols'),
-      rows: document.getElementById('rows'),
-      scaleMode: document.getElementById('scaleMode'),
-      outputFormat: document.getElementById('outputFormat'),
-      quality: document.getElementById('quality'),
-      qualityValue: document.getElementById('qualityValue'),
-      qualityGroup: document.getElementById('qualityGroup'),
-      multiplier: document.getElementById('multiplier'),
+      stepDownload:  document.getElementById('stepDownload'),
+      uploadZone:    document.getElementById('uploadZone'),
+      fileInput:     document.getElementById('fileInput'),
+      presetGrid:    document.getElementById('presetGrid'),
+      targetWidth:   document.getElementById('targetWidth'),
+      targetHeight:  document.getElementById('targetHeight'),
+      cols:          document.getElementById('cols'),
+      rows:          document.getElementById('rows'),
+      scaleMode:     document.getElementById('scaleMode'),
+      outputFormat:  document.getElementById('outputFormat'),
+      quality:       document.getElementById('quality'),
+      qualityValue:  document.getElementById('qualityValue'),
+      qualityGroup:  document.getElementById('qualityGroup'),
+      multiplier:    document.getElementById('multiplier'),
       btnBackUpload: document.getElementById('btnBackUpload'),
-      btnPreview: document.getElementById('btnPreview'),
+      btnPreview:    document.getElementById('btnPreview'),
       btnBackConfig: document.getElementById('btnBackConfig'),
-      btnDownloadAll: document.getElementById('btnDownloadAll'),
+      btnDownloadAll:document.getElementById('btnDownloadAll'),
       canvasWrapper: document.getElementById('canvasWrapper'),
       previewCanvas: document.getElementById('previewCanvas'),
-      previewInfo: document.getElementById('previewInfo'),
-      originalSize: document.getElementById('originalSize'),
-      targetSize: document.getElementById('targetSize'),
-      totalParts: document.getElementById('totalParts'),
-      partsGrid: document.getElementById('partsGrid'),
-      toastContainer: document.getElementById('toastContainer'),
-      themeToggle: document.getElementById('themeToggle'),
-      themeIcon: document.getElementById('themeIcon')
+      previewInfo:   document.getElementById('previewInfo'),
+      originalSize:  document.getElementById('originalSize'),
+      targetSize:    document.getElementById('targetSize'),
+      totalParts:    document.getElementById('totalParts'),
+      partsGrid:     document.getElementById('partsGrid'),
+      toastContainer:document.getElementById('toastContainer'),
     };
   }
 
@@ -109,9 +106,6 @@ export class UIController {
       this.dom.qualityGroup.style.display = isLossy ? 'flex' : 'none';
       this.debouncedPreview();
     });
-
-    // Theme
-    this.dom.themeToggle.addEventListener('click', () => this.toggleTheme());
 
     // Resize -> re-render preview with correct scaling
     window.addEventListener('resize', () => {
@@ -172,12 +166,8 @@ export class UIController {
       groups[preset.category].push(preset);
     }
 
-    const categoryLabels = {
-      social: 'Redes', print: 'Print', grid: 'Grid', custom: 'Custom'
-    };
-
     let html = '';
-    for (const [cat, presets] of Object.entries(groups)) {
+    for (const [, presets] of Object.entries(groups)) {
       for (const preset of presets) {
         const dims = preset.targetWidth ? `${preset.targetWidth}×${preset.targetHeight}` : `${preset.cols}×${preset.rows}`;
         const activeClass = preset.id === this.currentPresetId ? 'preset-chip--active' : '';
@@ -200,20 +190,18 @@ export class UIController {
       chip.classList.toggle('preset-chip--active', chip.dataset.id === id);
     });
 
-    // Store base dimensions from preset
-    this.baseWidth = preset.targetWidth || parseInt(this.dom.targetWidth.value, 10) || 1080;
+    this.baseWidth  = preset.targetWidth  || parseInt(this.dom.targetWidth.value, 10)  || 1080;
     this.baseHeight = preset.targetHeight || parseInt(this.dom.targetHeight.value, 10) || 1350;
 
-    // Apply current multiplier to base dims
     const mult = parseInt(this.dom.multiplier.value, 10) || 1;
-    this.dom.targetWidth.value = this.baseWidth * mult;
+    this.dom.targetWidth.value  = this.baseWidth  * mult;
     this.dom.targetHeight.value = this.baseHeight * mult;
 
-    this.dom.cols.value = preset.cols === 'auto' ? 1 : preset.cols;
-    this.dom.rows.value = preset.rows;
-    this.dom.scaleMode.value = preset.scaleMode;
+    this.dom.cols.value         = preset.cols === 'auto' ? 1 : preset.cols;
+    this.dom.rows.value         = preset.rows;
+    this.dom.scaleMode.value    = preset.scaleMode;
     this.dom.outputFormat.value = preset.format;
-    this.dom.quality.value = preset.quality;
+    this.dom.quality.value      = preset.quality;
     this.dom.qualityValue.textContent = preset.quality;
 
     const isLossy = preset.format !== 'image/png';
@@ -224,7 +212,7 @@ export class UIController {
 
   applyMultiplier() {
     const mult = parseInt(this.dom.multiplier.value, 10) || 1;
-    this.dom.targetWidth.value = this.baseWidth * mult;
+    this.dom.targetWidth.value  = this.baseWidth  * mult;
     this.dom.targetHeight.value = this.baseHeight * mult;
     if (this.currentFile) this.debouncedPreview();
   }
@@ -233,19 +221,19 @@ export class UIController {
     const mult = parseInt(this.dom.multiplier.value, 10) || 1;
     const w = parseInt(this.dom.targetWidth.value, 10);
     const h = parseInt(this.dom.targetHeight.value, 10);
-    if (w && mult) this.baseWidth = Math.round(w / mult);
+    if (w && mult) this.baseWidth  = Math.round(w / mult);
     if (h && mult) this.baseHeight = Math.round(h / mult);
   }
 
   getConfig() {
     return {
-      targetWidth: parseInt(this.dom.targetWidth.value, 10) || null,
+      targetWidth:  parseInt(this.dom.targetWidth.value, 10)  || null,
       targetHeight: parseInt(this.dom.targetHeight.value, 10) || null,
-      cols: this.dom.cols.value,
-      rows: parseInt(this.dom.rows.value, 10) || 1,
-      scaleMode: this.dom.scaleMode.value,
-      format: this.dom.outputFormat.value,
-      quality: parseInt(this.dom.quality.value, 10)
+      cols:         this.dom.cols.value,
+      rows:         parseInt(this.dom.rows.value, 10) || 1,
+      scaleMode:    this.dom.scaleMode.value,
+      format:       this.dom.outputFormat.value,
+      quality:      parseInt(this.dom.quality.value, 10)
     };
   }
 
@@ -253,24 +241,21 @@ export class UIController {
     if (!this.currentFile) return;
 
     const config = this.getConfig();
-    const info = this.processor.drawPreview(this.dom.previewCanvas, config);
+    const info   = this.processor.drawPreview(this.dom.previewCanvas, config);
 
     if (info) {
       this.dom.canvasWrapper.classList.add('has-image');
       this.dom.originalSize.textContent = `${info.originalWidth}×${info.originalHeight}`;
-      this.dom.targetSize.textContent = `${info.targetWidth}×${info.targetHeight}`;
-      this.dom.totalParts.textContent = `${info.totalParts} partes`;
+      this.dom.targetSize.textContent   = `${info.targetWidth}×${info.targetHeight}`;
+      this.dom.totalParts.textContent   = `${info.totalParts} partes`;
       this.dom.previewInfo.style.display = 'flex';
 
-      // CSS-scale the canvas to fit the wrapper without scroll
       const wrapper = this.dom.canvasWrapper;
-      const maxW = wrapper.clientWidth;
-      const maxH = wrapper.clientHeight;
+      const maxW  = wrapper.clientWidth;
+      const maxH  = wrapper.clientHeight;
       const scale = Math.min(maxW / info.originalWidth, maxH / info.originalHeight, 1);
-      const w = Math.floor(info.originalWidth * scale);
-      const h = Math.floor(info.originalHeight * scale);
-      this.dom.previewCanvas.style.width = w + 'px';
-      this.dom.previewCanvas.style.height = h + 'px';
+      this.dom.previewCanvas.style.width  = Math.floor(info.originalWidth  * scale) + 'px';
+      this.dom.previewCanvas.style.height = Math.floor(info.originalHeight * scale) + 'px';
     }
   }
 
@@ -287,7 +272,6 @@ export class UIController {
       for (const part of this.parts) {
         const card = document.createElement('div');
         card.className = 'part-card';
-        card.style.animationDelay = `${part.index * 0.04}s`;
         card.innerHTML = `
           <img src="${part.url}" alt="${part.name}" loading="lazy">
           <div class="part-card-info">
@@ -296,8 +280,10 @@ export class UIController {
               <div class="part-dims">${part.width}×${part.height}</div>
             </div>
             <button class="part-download" title="Descargar">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
               </svg>
             </button>
           </div>
@@ -339,42 +325,19 @@ export class UIController {
     }
   }
 
-  applyTheme() {
-    const saved = localStorage.getItem('imgdivider-theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const theme = saved || (prefersDark ? 'dark' : 'light');
-    document.documentElement.setAttribute('data-theme', theme);
-    this.updateThemeIcon(theme);
-  }
-
-  toggleTheme() {
-    const current = document.documentElement.getAttribute('data-theme') || 'dark';
-    const next = current === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('imgdivider-theme', next);
-    this.updateThemeIcon(next);
-  }
-
-  updateThemeIcon(theme) {
-    const svg = theme === 'dark'
-      ? '<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>'
-      : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
-    this.dom.themeIcon.innerHTML = svg;
-  }
-
   showToast(message, type = 'info') {
     const toast = document.createElement('div');
     toast.className = `toast toast--${type}`;
     const icons = {
-      success: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#22c55e" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>',
-      error: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
-      info: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--accent)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+      success: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#22c55e" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>',
+      error:   '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+      info:    '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--accent)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
     };
     toast.innerHTML = `${icons[type] || icons.info}<span>${message}</span>`;
     this.dom.toastContainer.appendChild(toast);
     setTimeout(() => {
       toast.classList.add('toast-exit');
-      setTimeout(() => toast.remove(), 250);
+      setTimeout(() => toast.remove(), 200);
     }, 3000);
   }
 }
