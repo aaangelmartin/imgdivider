@@ -8,12 +8,9 @@ export class ImageProcessor {
     this.sourceImage = null;
     this.sourceWidth = 0;
     this.sourceHeight = 0;
-    this.parts = []; // Array of { canvas, blob, name, width, height }
+    this.parts = [];
   }
 
-  /**
-   * Load an image from a File object
-   */
   async loadImage(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -34,85 +31,80 @@ export class ImageProcessor {
   }
 
   /**
-   * Draw a preview on a canvas with guides showing the split grid
+   * Draw preview with split guides.
+   * Renders the ORIGINAL image at full resolution, then the canvas is CSS-scaled down.
+   * This preserves 100% quality for the actual split later.
    */
   drawPreview(canvas, config) {
-    if (!this.sourceImage) return;
+    if (!this.sourceImage) return null;
 
     const ctx = canvas.getContext('2d');
-    const { targetWidth, targetHeight, cols, rows, scaleMode } = config;
+    const { targetWidth, targetHeight, cols, rows } = config;
 
-    // Determine actual cols/rows
     const actualCols = this.resolveCols(cols, targetWidth, targetHeight);
-    const actualRows = rows === 'auto' ? 1 : rows;
+    const actualRows = parseInt(rows, 10) || 1;
 
-    // Calculate cell dimensions
-    const cellW = targetWidth || Math.floor(this.sourceWidth / actualCols);
-    const cellH = targetHeight || Math.floor(this.sourceHeight / actualRows);
+    // Use source dimensions as canvas size for 1:1 pixel mapping
+    const canvasW = this.sourceWidth;
+    const canvasH = this.sourceHeight;
 
-    // Determine preview canvas size (scale down to fit display)
-    const maxPreviewWidth = Math.min(800, window.innerWidth - 60);
-    const scale = Math.min(1, maxPreviewWidth / this.sourceWidth);
-    const previewW = Math.floor(this.sourceWidth * scale);
-    const previewH = Math.floor(this.sourceHeight * scale);
+    if (canvas.width !== canvasW || canvas.height !== canvasH) {
+      canvas.width = canvasW;
+      canvas.height = canvasH;
+    }
 
-    canvas.width = previewW;
-    canvas.height = previewH;
-    canvas.style.width = previewW + 'px';
-    canvas.style.height = previewH + 'px';
+    ctx.clearRect(0, 0, canvasW, canvasH);
 
-    // Clear and draw image
-    ctx.clearRect(0, 0, previewW, previewH);
-    ctx.drawImage(this.sourceImage, 0, 0, previewW, previewH);
+    // Draw original image
+    ctx.drawImage(this.sourceImage, 0, 0);
 
-    // Draw guide lines
-    const guideScaleX = previewW / this.sourceWidth;
-    const guideScaleY = previewH / this.sourceHeight;
+    // Determine cell dimensions in source pixels
+    let cellW, cellH;
+    if (targetWidth && targetHeight) {
+      cellW = targetWidth;
+      cellH = targetHeight;
+    } else {
+      cellW = Math.floor(canvasW / actualCols);
+      cellH = Math.floor(canvasH / actualRows);
+    }
 
-    ctx.strokeStyle = 'rgba(99, 102, 241, 0.85)';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([6, 4]);
+    // Draw guide lines with glow effect
+    ctx.save();
+    ctx.strokeStyle = 'rgba(99, 102, 241, 0.9)';
+    ctx.lineWidth = Math.max(2, Math.floor(canvasW / 800));
+    ctx.setLineDash([Math.floor(canvasW / 120), Math.floor(canvasW / 180)]);
+    ctx.shadowColor = 'rgba(99, 102, 241, 0.6)';
+    ctx.shadowBlur = 8;
 
     // Vertical guides
     for (let c = 1; c < actualCols; c++) {
-      const x = c * cellW * guideScaleX;
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, previewH);
-      ctx.stroke();
+      const x = c * cellW;
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvasH); ctx.stroke();
     }
-
     // Horizontal guides
     for (let r = 1; r < actualRows; r++) {
-      const y = r * cellH * guideScaleY;
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(previewW, y);
-      ctx.stroke();
+      const y = r * cellH;
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvasW, y); ctx.stroke();
     }
 
-    // Draw labels on each cell
-    ctx.setLineDash([]);
-    ctx.font = 'bold 12px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    ctx.restore();
+
+    // Draw cell labels
+    ctx.font = `bold ${Math.max(14, Math.floor(canvasW / 60))}px sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
 
     for (let r = 0; r < actualRows; r++) {
       for (let c = 0; c < actualCols; c++) {
-        const x = c * cellW * guideScaleX;
-        const y = r * cellH * guideScaleY;
-        const w = cellW * guideScaleX;
-        const h = cellH * guideScaleY;
-        const centerX = x + w / 2;
-        const centerY = y + h / 2;
+        const x = c * cellW;
+        const y = r * cellH;
+        const cx = x + cellW / 2;
+        const cy = y + cellH / 2;
 
-        // Semi-transparent overlay
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-        ctx.fillRect(x + 1, y + 1, w - 2, h - 2);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+        ctx.fillRect(x + 2, y + 2, cellW - 4, cellH - 4);
 
-        // Label
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-        ctx.fillText(`${r * actualCols + c + 1}`, centerX, centerY);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+        ctx.fillText(`${r * actualCols + c + 1}`, cx, cy);
       }
     }
 
@@ -127,41 +119,40 @@ export class ImageProcessor {
     };
   }
 
-  /**
-   * Resolve 'auto' cols for carousel mode
-   */
   resolveCols(cols, targetWidth, targetHeight) {
-    if (cols !== 'auto') return parseInt(cols, 10) || 1;
-
-    // For carousel: calculate how many target-sized panels fit horizontally
+    if (String(cols) !== 'auto') return parseInt(cols, 10) || 1;
     if (!targetWidth || !targetHeight) return 1;
 
     const imgRatio = this.sourceWidth / this.sourceHeight;
     const targetRatio = targetWidth / targetHeight;
 
-    // If image is wider than target ratio, split it
     if (imgRatio > targetRatio) {
-      const colsCount = Math.max(2, Math.round((this.sourceWidth / this.sourceHeight) * targetHeight / targetWidth));
-      return colsCount;
+      return Math.max(2, Math.round((this.sourceWidth / this.sourceHeight) * targetHeight / targetWidth));
     }
     return 1;
   }
 
   /**
-   * Generate all split parts as canvases/blobs
+   * Generate parts at FULL source resolution (100% quality preservation).
+   * Only compress at the final blob conversion step based on user format/quality.
    */
   async generateParts(config) {
     if (!this.sourceImage) throw new Error('No hay imagen cargada');
 
     const { targetWidth, targetHeight, cols, rows, scaleMode, format, quality } = config;
     const actualCols = this.resolveCols(cols, targetWidth, targetHeight);
-    const actualRows = rows === 'auto' ? 1 : parseInt(rows, 10) || 1;
+    const actualRows = parseInt(rows, 10) || 1;
 
-    const cellW = targetWidth || Math.floor(this.sourceWidth / actualCols);
-    const cellH = targetHeight || Math.floor(this.sourceHeight / actualRows);
+    let cellW, cellH;
+    if (targetWidth && targetHeight) {
+      cellW = targetWidth;
+      cellH = targetHeight;
+    } else {
+      cellW = Math.floor(this.sourceWidth / actualCols);
+      cellH = Math.floor(this.sourceHeight / actualRows);
+    }
 
     this.parts = [];
-    const total = actualCols * actualRows;
 
     for (let r = 0; r < actualRows; r++) {
       for (let c = 0; c < actualCols; c++) {
@@ -170,45 +161,45 @@ export class ImageProcessor {
         canvas.height = cellH;
         const ctx = canvas.getContext('2d');
 
-        // Fill background (for fit mode with transparency or gaps)
+        // White background for fit mode gaps
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, cellW, cellH);
 
-        // Calculate source crop/scale
         const sx = c * cellW;
         const sy = r * cellH;
-        const sWidth = cellW;
-        const sHeight = cellH;
 
         if (scaleMode === 'stretch') {
-          // Stretch source region to fill cell exactly
-          ctx.drawImage(this.sourceImage, sx, sy, sWidth, sHeight, 0, 0, cellW, cellH);
+          // Map exact source region to cell (may sample subpixels, sharp)
+          ctx.drawImage(this.sourceImage, sx, sy, cellW, cellH, 0, 0, cellW, cellH);
         } else if (scaleMode === 'fit') {
-          // Scale to fit within cell, preserving aspect ratio, centered
-          const srcRatio = sWidth / sHeight;
+          const srcRatio = cellW / cellH;
           const cellRatio = cellW / cellH;
           let drawW, drawH, dx, dy;
 
-          if (srcRatio > cellRatio) {
+          // Source region might be larger/smaller depending on original
+          const sourceRegionW = cellW;
+          const sourceRegionH = cellH;
+          const regionRatio = sourceRegionW / sourceRegionH;
+
+          if (regionRatio > cellRatio) {
             drawW = cellW;
-            drawH = cellW / srcRatio;
+            drawH = cellW / regionRatio;
             dx = 0;
             dy = (cellH - drawH) / 2;
           } else {
             drawH = cellH;
-            drawW = cellH * srcRatio;
+            drawW = cellH * regionRatio;
             dx = (cellW - drawW) / 2;
             dy = 0;
           }
 
-          ctx.drawImage(this.sourceImage, sx, sy, sWidth, sHeight, dx, dy, drawW, drawH);
+          ctx.drawImage(this.sourceImage, sx, sy, sourceRegionW, sourceRegionH, dx, dy, drawW, drawH);
         } else {
-          // Default: crop — draw source region directly (1:1 pixel mapping if possible)
-          // But we need to handle if source region is smaller/larger than cell
-          ctx.drawImage(this.sourceImage, sx, sy, sWidth, sHeight, 0, 0, cellW, cellH);
+          // crop — exact 1:1 mapping of source pixels to cell
+          ctx.drawImage(this.sourceImage, sx, sy, cellW, cellH, 0, 0, cellW, cellH);
         }
 
-        // Convert to blob
+        // Convert to blob with user-chosen format/quality
         const blob = await this.canvasToBlob(canvas, format, quality / 100);
         const ext = format === 'image/png' ? 'png' : format === 'image/webp' ? 'webp' : 'jpg';
         const name = `parte_${String(r * actualCols + c + 1).padStart(2, '0')}.${ext}`;
@@ -228,18 +219,12 @@ export class ImageProcessor {
     return this.parts;
   }
 
-  /**
-   * Convert canvas to Blob with format and quality
-   */
   canvasToBlob(canvas, format, quality) {
     return new Promise((resolve) => {
       canvas.toBlob((blob) => resolve(blob), format, quality);
     });
   }
 
-  /**
-   * Clean up object URLs to prevent memory leaks
-   */
   cleanup() {
     for (const part of this.parts) {
       if (part.url) URL.revokeObjectURL(part.url);

@@ -15,7 +15,7 @@ export const PRESETS = [
     rows: 1,
     scaleMode: 'crop',
     format: 'image/jpeg',
-    quality: 92,
+    quality: 100,
     category: 'social'
   },
   {
@@ -29,7 +29,7 @@ export const PRESETS = [
     rows: 1,
     scaleMode: 'crop',
     format: 'image/jpeg',
-    quality: 92,
+    quality: 100,
     category: 'social'
   },
   {
@@ -43,7 +43,7 @@ export const PRESETS = [
     rows: 1,
     scaleMode: 'crop',
     format: 'image/jpeg',
-    quality: 92,
+    quality: 100,
     category: 'social',
     autoCols: true // Special flag: calculate cols based on image aspect ratio
   },
@@ -57,7 +57,7 @@ export const PRESETS = [
     rows: 1,
     scaleMode: 'crop',
     format: 'image/jpeg',
-    quality: 90,
+    quality: 100,
     category: 'social'
   },
   {
@@ -70,7 +70,7 @@ export const PRESETS = [
     rows: 1,
     scaleMode: 'crop',
     format: 'image/jpeg',
-    quality: 90,
+    quality: 100,
     category: 'social'
   },
   {
@@ -83,7 +83,7 @@ export const PRESETS = [
     rows: 1,
     scaleMode: 'crop',
     format: 'image/jpeg',
-    quality: 92,
+    quality: 100,
     category: 'social'
   },
   {
@@ -96,7 +96,7 @@ export const PRESETS = [
     rows: 1,
     scaleMode: 'crop',
     format: 'image/jpeg',
-    quality: 90,
+    quality: 100,
     category: 'social'
   },
   {
@@ -109,7 +109,7 @@ export const PRESETS = [
     rows: 1,
     scaleMode: 'crop',
     format: 'image/jpeg',
-    quality: 90,
+    quality: 100,
     category: 'social'
   },
   {
@@ -135,7 +135,7 @@ export const PRESETS = [
     rows: 2,
     scaleMode: 'crop',
     format: 'image/jpeg',
-    quality: 90,
+    quality: 100,
     category: 'grid'
   },
   {
@@ -148,7 +148,7 @@ export const PRESETS = [
     rows: 3,
     scaleMode: 'crop',
     format: 'image/jpeg',
-    quality: 90,
+    quality: 100,
     category: 'grid'
   },
   {
@@ -161,7 +161,7 @@ export const PRESETS = [
     rows: 4,
     scaleMode: 'crop',
     format: 'image/jpeg',
-    quality: 90,
+    quality: 100,
     category: 'grid'
   },
   {
@@ -174,7 +174,7 @@ export const PRESETS = [
     rows: 1,
     scaleMode: 'crop',
     format: 'image/jpeg',
-    quality: 90,
+    quality: 100,
     category: 'custom'
   }
 ];

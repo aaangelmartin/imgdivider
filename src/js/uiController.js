@@ -1,6 +1,5 @@
 /**
  * ImgDivider — UI Controller
- * Handles all DOM interactions, state management, and view orchestration.
  */
 
 import { PRESETS, getPreset } from './presets.js';
@@ -14,25 +13,22 @@ export class UIController {
     this.currentFile = null;
     this.currentPresetId = 'instagram-post';
     this.parts = [];
+    this.previewDebounceTimer = null;
 
     this.cacheDOM();
     this.bindEvents();
     this.renderPresets();
     this.applyTheme();
+    this.selectPreset('instagram-post');
   }
 
   cacheDOM() {
     this.dom = {
-      // Steps
       stepUpload: document.getElementById('stepUpload'),
       stepConfigure: document.getElementById('stepConfigure'),
       stepDownload: document.getElementById('stepDownload'),
-
-      // Upload
       uploadZone: document.getElementById('uploadZone'),
       fileInput: document.getElementById('fileInput'),
-
-      // Config sidebar
       presetGrid: document.getElementById('presetGrid'),
       targetWidth: document.getElementById('targetWidth'),
       targetHeight: document.getElementById('targetHeight'),
@@ -43,25 +39,17 @@ export class UIController {
       quality: document.getElementById('quality'),
       qualityValue: document.getElementById('qualityValue'),
       qualityGroup: document.getElementById('qualityGroup'),
-
-      // Buttons
       btnBackUpload: document.getElementById('btnBackUpload'),
       btnPreview: document.getElementById('btnPreview'),
       btnBackConfig: document.getElementById('btnBackConfig'),
       btnDownloadAll: document.getElementById('btnDownloadAll'),
-
-      // Preview
       canvasWrapper: document.getElementById('canvasWrapper'),
       previewCanvas: document.getElementById('previewCanvas'),
       previewInfo: document.getElementById('previewInfo'),
       originalSize: document.getElementById('originalSize'),
       targetSize: document.getElementById('targetSize'),
       totalParts: document.getElementById('totalParts'),
-
-      // Download
       partsGrid: document.getElementById('partsGrid'),
-
-      // Global
       toastContainer: document.getElementById('toastContainer'),
       themeToggle: document.getElementById('themeToggle'),
       themeIcon: document.getElementById('themeIcon')
@@ -69,25 +57,18 @@ export class UIController {
   }
 
   bindEvents() {
-    // File upload
+    // Upload
     this.dom.fileInput.addEventListener('change', (e) => this.handleFileSelect(e.target.files[0]));
 
-    // Drag & drop
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-      this.dom.uploadZone.addEventListener(eventName, (e) => this.preventDefaults(e), false);
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(ev => {
+      this.dom.uploadZone.addEventListener(ev, (e) => { e.preventDefault(); e.stopPropagation(); }, false);
     });
 
-    ['dragenter', 'dragover'].forEach(eventName => {
-      this.dom.uploadZone.addEventListener(eventName, () => this.dom.uploadZone.classList.add('upload-zone--dragover'), false);
-    });
-
-    ['dragleave', 'drop'].forEach(eventName => {
-      this.dom.uploadZone.addEventListener(eventName, () => this.dom.uploadZone.classList.remove('upload-zone--dragover'), false);
-    });
-
+    this.dom.uploadZone.addEventListener('dragenter', () => this.dom.uploadZone.classList.add('upload-zone--dragover'));
+    this.dom.uploadZone.addEventListener('dragleave', () => this.dom.uploadZone.classList.remove('upload-zone--dragover'));
     this.dom.uploadZone.addEventListener('drop', (e) => {
-      const files = e.dataTransfer.files;
-      if (files.length) this.handleFileSelect(files[0]);
+      this.dom.uploadZone.classList.remove('upload-zone--dragover');
+      if (e.dataTransfer.files.length) this.handleFileSelect(e.dataTransfer.files[0]);
     });
 
     // Navigation
@@ -96,62 +77,72 @@ export class UIController {
     this.dom.btnBackConfig.addEventListener('click', () => this.goToStep('configure'));
     this.dom.btnDownloadAll.addEventListener('click', () => this.downloadAllZip());
 
-    // Quality slider
+    // Real-time preview on ANY input change (debounced 120ms)
+    const inputs = [
+      this.dom.targetWidth, this.dom.targetHeight, this.dom.cols,
+      this.dom.rows, this.dom.scaleMode, this.dom.outputFormat, this.dom.quality
+    ];
+    inputs.forEach(input => {
+      input.addEventListener('input', () => this.debouncedPreview());
+      input.addEventListener('change', () => this.debouncedPreview());
+    });
+
+    // Quality label update + preview
     this.dom.quality.addEventListener('input', () => {
       this.dom.qualityValue.textContent = this.dom.quality.value;
+      this.debouncedPreview();
     });
 
-    // Format change (show/hide quality)
+    // Format change -> show/hide quality
     this.dom.outputFormat.addEventListener('change', () => {
       const isLossy = this.dom.outputFormat.value !== 'image/png';
-      this.dom.qualityGroup.style.display = isLossy ? 'block' : 'none';
+      this.dom.qualityGroup.style.display = isLossy ? 'flex' : 'none';
+      this.debouncedPreview();
     });
 
-    // Theme toggle
+    // Theme
     this.dom.themeToggle.addEventListener('click', () => this.toggleTheme());
 
-    // Window resize re-render preview
-    let resizeTimer;
+    // Resize -> re-render preview with correct scaling
     window.addEventListener('resize', () => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => {
+      clearTimeout(this.resizeTimer);
+      this.resizeTimer = setTimeout(() => {
         if (this.currentFile && this.dom.stepConfigure.classList.contains('step--active')) {
           this.updatePreview();
         }
-      }, 250);
+      }, 200);
     });
   }
 
-  preventDefaults(e) {
-    e.preventDefault();
-    e.stopPropagation();
+  debouncedPreview() {
+    clearTimeout(this.previewDebounceTimer);
+    this.previewDebounceTimer = setTimeout(() => {
+      if (this.currentFile) this.updatePreview();
+    }, 120);
   }
 
   async handleFileSelect(file) {
     if (!file || !file.type.startsWith('image/')) {
-      this.showToast('Por favor selecciona un archivo de imagen válido.', 'error');
+      this.showToast('Selecciona un archivo de imagen válido.', 'error');
       return;
     }
 
     this.currentFile = file;
-
     try {
       const { width, height } = await this.processor.loadImage(file);
-      this.showToast(`Imagen cargada: ${width}×${height}px`, 'success');
+      this.showToast(`${width}×${height}px cargado`, 'success');
       this.goToStep('configure');
       this.updatePreview();
     } catch (err) {
-      this.showToast('Error al cargar la imagen: ' + err.message, 'error');
+      this.showToast('Error al cargar: ' + err.message, 'error');
     }
   }
 
   goToStep(stepName) {
-    // Hide all steps
     this.dom.stepUpload.classList.remove('step--active');
     this.dom.stepConfigure.classList.remove('step--active');
     this.dom.stepDownload.classList.remove('step--active');
 
-    // Show target
     if (stepName === 'upload') {
       this.dom.stepUpload.classList.add('step--active');
       this.processor.cleanup();
@@ -159,8 +150,6 @@ export class UIController {
       this.dom.fileInput.value = '';
     } else if (stepName === 'configure') {
       this.dom.stepConfigure.classList.add('step--active');
-      // Scroll to top smoothly
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (stepName === 'download') {
       this.generateAndShowParts();
     }
@@ -173,36 +162,22 @@ export class UIController {
       groups[preset.category].push(preset);
     }
 
-    let html = '';
     const categoryLabels = {
-      social: 'Redes Sociales',
-      print: 'Impresión',
-      grid: 'Grids',
-      custom: 'Personalizado'
+      social: 'Redes', print: 'Print', grid: 'Grid', custom: 'Custom'
     };
 
+    let html = '';
     for (const [cat, presets] of Object.entries(groups)) {
-      html += `<div class="preset-section"><h3 class="section-label">${categoryLabels[cat] || cat}</h3><div class="preset-grid">`;
       for (const preset of presets) {
         const dims = preset.targetWidth ? `${preset.targetWidth}×${preset.targetHeight}` : `${preset.cols}×${preset.rows}`;
-        const activeClass = preset.id === this.currentPresetId ? 'preset-card--active' : '';
-        const badgeHtml = preset.badge ? `<span class="preset-badge">${preset.badge}</span>` : '';
-        html += `
-          <div class="preset-card ${activeClass}" data-id="${preset.id}">
-            ${badgeHtml}
-            <div class="preset-name">${preset.name}</div>
-            <div class="preset-dims">${dims}</div>
-          </div>
-        `;
+        const activeClass = preset.id === this.currentPresetId ? 'preset-chip--active' : '';
+        html += `<button class="preset-chip ${activeClass}" data-id="${preset.id}" title="${preset.description} — ${dims}">${preset.name}</button>`;
       }
-      html += '</div></div>';
     }
 
     this.dom.presetGrid.innerHTML = html;
-
-    // Bind preset clicks
-    this.dom.presetGrid.querySelectorAll('.preset-card').forEach(card => {
-      card.addEventListener('click', () => this.selectPreset(card.dataset.id));
+    this.dom.presetGrid.querySelectorAll('.preset-chip').forEach(chip => {
+      chip.addEventListener('click', () => this.selectPreset(chip.dataset.id));
     });
   }
 
@@ -211,12 +186,10 @@ export class UIController {
     const preset = getPreset(id);
     if (!preset) return;
 
-    // Update UI active state
-    this.dom.presetGrid.querySelectorAll('.preset-card').forEach(card => {
-      card.classList.toggle('preset-card--active', card.dataset.id === id);
+    this.dom.presetGrid.querySelectorAll('.preset-chip').forEach(chip => {
+      chip.classList.toggle('preset-chip--active', chip.dataset.id === id);
     });
 
-    // Update inputs
     if (preset.targetWidth) this.dom.targetWidth.value = preset.targetWidth;
     if (preset.targetHeight) this.dom.targetHeight.value = preset.targetHeight;
     this.dom.cols.value = preset.cols === 'auto' ? 1 : preset.cols;
@@ -226,14 +199,10 @@ export class UIController {
     this.dom.quality.value = preset.quality;
     this.dom.qualityValue.textContent = preset.quality;
 
-    // Show/hide quality
     const isLossy = preset.format !== 'image/png';
-    this.dom.qualityGroup.style.display = isLossy ? 'block' : 'none';
+    this.dom.qualityGroup.style.display = isLossy ? 'flex' : 'none';
 
-    // Update preview if image loaded
-    if (this.currentFile) {
-      this.updatePreview();
-    }
+    if (this.currentFile) this.updatePreview();
   }
 
   getConfig() {
@@ -256,62 +225,66 @@ export class UIController {
 
     if (info) {
       this.dom.canvasWrapper.classList.add('has-image');
-      this.dom.originalSize.textContent = `Original: ${info.originalWidth}×${info.originalHeight}`;
-      this.dom.targetSize.textContent = `Celda: ${info.targetWidth}×${info.targetHeight}`;
-      this.dom.totalParts.textContent = `Partes: ${info.totalParts}`;
+      this.dom.originalSize.textContent = `${info.originalWidth}×${info.originalHeight}`;
+      this.dom.targetSize.textContent = `${info.targetWidth}×${info.targetHeight}`;
+      this.dom.totalParts.textContent = `${info.totalParts} partes`;
       this.dom.previewInfo.style.display = 'flex';
+
+      // CSS-scale the canvas to fit the wrapper without scroll
+      const wrapper = this.dom.canvasWrapper;
+      const maxW = wrapper.clientWidth;
+      const maxH = wrapper.clientHeight;
+      const scale = Math.min(maxW / info.originalWidth, maxH / info.originalHeight, 1);
+      const w = Math.floor(info.originalWidth * scale);
+      const h = Math.floor(info.originalHeight * scale);
+      this.dom.previewCanvas.style.width = w + 'px';
+      this.dom.previewCanvas.style.height = h + 'px';
     }
   }
 
   async generateAndShowParts() {
     this.dom.btnPreview.disabled = true;
-    this.dom.btnPreview.textContent = 'Procesando...';
+    const originalText = this.dom.btnPreview.textContent;
+    this.dom.btnPreview.textContent = 'Dividiendo...';
 
     try {
       const config = this.getConfig();
       this.parts = await this.processor.generateParts(config);
 
-      // Render parts grid
       this.dom.partsGrid.innerHTML = '';
       for (const part of this.parts) {
         const card = document.createElement('div');
         card.className = 'part-card';
-        card.style.animationDelay = `${part.index * 0.05}s`;
+        card.style.animationDelay = `${part.index * 0.04}s`;
         card.innerHTML = `
           <img src="${part.url}" alt="${part.name}" loading="lazy">
           <div class="part-card-info">
             <div>
-              <div class="part-name">Parte ${part.index + 1}</div>
+              <div class="part-name">${part.index + 1}</div>
               <div class="part-dims">${part.width}×${part.height}</div>
             </div>
-            <button class="part-download" data-name="${part.name}" title="Descargar esta parte">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <button class="part-download" title="Descargar">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
               </svg>
             </button>
           </div>
         `;
-
-        // Bind single download
         card.querySelector('.part-download').addEventListener('click', () => {
           this.exporter.downloadSingle(part.blob, part.name);
         });
-
         this.dom.partsGrid.appendChild(card);
       }
 
-      // Show download step
       this.dom.stepDownload.classList.add('step--active');
       this.dom.stepConfigure.classList.remove('step--active');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-
-      this.showToast(`${this.parts.length} partes generadas correctamente`, 'success');
+      this.showToast(`${this.parts.length} partes listas`, 'success');
     } catch (err) {
-      this.showToast('Error al generar partes: ' + err.message, 'error');
+      this.showToast('Error: ' + err.message, 'error');
       console.error(err);
     } finally {
       this.dom.btnPreview.disabled = false;
-      this.dom.btnPreview.textContent = 'Generar vista previa';
+      this.dom.btnPreview.textContent = originalText;
     }
   }
 
@@ -319,21 +292,21 @@ export class UIController {
     if (!this.parts.length) return;
 
     this.dom.btnDownloadAll.disabled = true;
-    this.dom.btnDownloadAll.textContent = 'Generando ZIP...';
+    const originalText = this.dom.btnDownloadAll.textContent;
+    this.dom.btnDownloadAll.textContent = 'Generando...';
 
     try {
       const baseName = this.currentFile ? this.currentFile.name.replace(/\.[^.]+$/, '') : 'imagen';
       await this.exporter.downloadZip(this.parts, `${baseName}_dividida.zip`);
-      this.showToast('ZIP descargado correctamente', 'success');
+      this.showToast('ZIP descargado', 'success');
     } catch (err) {
-      this.showToast('Error al generar ZIP: ' + err.message, 'error');
+      this.showToast('Error ZIP: ' + err.message, 'error');
     } finally {
       this.dom.btnDownloadAll.disabled = false;
-      this.dom.btnDownloadAll.textContent = '📦 Descargar ZIP';
+      this.dom.btnDownloadAll.textContent = originalText;
     }
   }
 
-  // Theme management
   applyTheme() {
     const saved = localStorage.getItem('imgdivider-theme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -357,23 +330,19 @@ export class UIController {
     this.dom.themeIcon.innerHTML = svg;
   }
 
-  // Toast notifications
   showToast(message, type = 'info') {
     const toast = document.createElement('div');
     toast.className = `toast toast--${type}`;
-
     const icons = {
-      success: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
-      error: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
-      info: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+      success: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#22c55e" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>',
+      error: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+      info: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--accent)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
     };
-
     toast.innerHTML = `${icons[type] || icons.info}<span>${message}</span>`;
     this.dom.toastContainer.appendChild(toast);
-
     setTimeout(() => {
       toast.classList.add('toast-exit');
-      setTimeout(() => toast.remove(), 300);
-    }, 3500);
+      setTimeout(() => toast.remove(), 250);
+    }, 3000);
   }
 }

@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#0f0f1a">
-  <meta name="description" content="Divide cualquier imagen en partes perfectas. Totalmente offline. PWA para Instagram, Pinterest, Twitter y más.">
-  <title>ImgDivider — Divide Imágenes Perfectamente</title>
+  <meta name="description" content="Divide cualquier imagen en partes perfectas. Totalmente offline.">
+  <title>ImgDivider</title>
 
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="src/assets/icons/icon-192.png">
@@ -20,7 +20,7 @@
   <div class="app">
     <header class="app-header">
       <div class="logo">
-        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
           <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
         </svg>
@@ -28,7 +28,7 @@
       </div>
       <div class="header-actions">
         <button id="themeToggle" class="icon-btn" aria-label="Cambiar tema" title="Cambiar tema">
-          <svg id="themeIcon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg id="themeIcon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
           </svg>
         </button>
@@ -38,102 +38,91 @@
     <main class="app-main">
       <!-- STEP 1: UPLOAD -->
       <section id="stepUpload" class="step step--active">
-        <div class="step-header">
-          <span class="step-number">1</span>
-          <h2 class="step-title">Sube tu imagen</h2>
-          <p class="step-desc">Arrastra una imagen aquí o haz clic para seleccionarla. Todo el procesamiento ocurre en tu dispositivo.</p>
-        </div>
-
         <div class="upload-zone" id="uploadZone">
           <input type="file" id="fileInput" class="file-input" accept="image/*" aria-label="Seleccionar imagen">
           <div class="upload-zone-content">
-            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="upload-icon">
+            <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="upload-icon">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
             </svg>
             <p class="upload-text"><strong>Arrastra tu imagen aquí</strong></p>
-            <p class="upload-sub">o haz clic para seleccionar un archivo</p>
-            <p class="upload-formats">Soporta: JPG, PNG, WEBP, GIF, BMP, SVG</p>
+            <p class="upload-sub">o haz clic para seleccionar</p>
+            <p class="upload-formats">JPG · PNG · WEBP · GIF · BMP · SVG</p>
           </div>
         </div>
       </section>
 
       <!-- STEP 2: CONFIGURE -->
       <section id="stepConfigure" class="step">
-        <div class="step-header">
-          <span class="step-number">2</span>
-          <h2 class="step-title">Configura la división</h2>
-          <p class="step-desc">Elige un preset o define dimensiones personalizadas. La vista previa se actualiza en tiempo real.</p>
-        </div>
+        <div class="editor-layout">
+          <!-- PREVIEW (top, fills available space) -->
+          <div class="editor-preview" id="editorPreview">
+            <div class="canvas-wrapper" id="canvasWrapper">
+              <canvas id="previewCanvas"></canvas>
+              <div class="canvas-placeholder" id="canvasPlaceholder">
+                <p>Cargando imagen...</p>
+              </div>
+            </div>
+            <div class="preview-info" id="previewInfo" style="display:none;">
+              <span id="originalSize">—</span>
+              <span id="targetSize">—</span>
+              <span id="totalParts">—</span>
+            </div>
+          </div>
 
-        <div class="config-layout">
-          <div class="config-sidebar">
-            <div class="preset-section">
-              <h3 class="section-label">Presets rápidos</h3>
-              <div class="preset-grid" id="presetGrid">
+          <!-- CONTROLS (bottom, compact toolbar) -->
+          <div class="editor-toolbar">
+            <!-- Presets row -->
+            <div class="toolbar-row">
+              <div class="toolbar-label">Presets</div>
+              <div class="preset-chips" id="presetGrid">
                 <!-- Injected by JS -->
               </div>
             </div>
 
-            <div class="custom-section" id="customSection">
-              <h3 class="section-label">Personalizado</h3>
-              <div class="field-group">
-                <label for="targetWidth">Ancho objetivo (px)</label>
-                <input type="number" id="targetWidth" min="1" max="10000" value="1080" placeholder="1080">
+            <!-- Custom params row -->
+            <div class="toolbar-row toolbar-row--inputs">
+              <div class="input-pair">
+                <label for="targetWidth">Ancho</label>
+                <input type="number" id="targetWidth" min="1" max="20000" value="1080" placeholder="px">
               </div>
-              <div class="field-group">
-                <label for="targetHeight">Alto objetivo (px)</label>
-                <input type="number" id="targetHeight" min="1" max="10000" value="1350" placeholder="1350">
+              <div class="input-pair">
+                <label for="targetHeight">Alto</label>
+                <input type="number" id="targetHeight" min="1" max="20000" value="1350" placeholder="px">
               </div>
-              <div class="field-group field-group--inline">
-                <div>
-                  <label for="cols">Columnas</label>
-                  <input type="number" id="cols" min="1" max="50" value="1">
-                </div>
-                <div>
-                  <label for="rows">Filas</label>
-                  <input type="number" id="rows" min="1" max="50" value="1">
-                </div>
+              <div class="input-pair input-pair--small">
+                <label for="cols">Cols</label>
+                <input type="number" id="cols" min="1" max="50" value="1">
               </div>
-              <div class="field-group">
-                <label for="scaleMode">Modo de escala</label>
+              <div class="input-pair input-pair--small">
+                <label for="rows">Rows</label>
+                <input type="number" id="rows" min="1" max="50" value="1">
+              </div>
+              <div class="input-pair">
+                <label for="scaleMode">Escala</label>
                 <select id="scaleMode">
-                  <option value="crop">Recortar (rellena, corta sobrante)</option>
-                  <option value="fit">Ajustar (encaja, rellena fondo)</option>
-                  <option value="stretch">Estirar (deforma para encajar)</option>
+                  <option value="crop">Recortar</option>
+                  <option value="fit">Ajustar</option>
+                  <option value="stretch">Estirar</option>
                 </select>
               </div>
-              <div class="field-group">
-                <label for="outputFormat">Formato de salida</label>
+              <div class="input-pair">
+                <label for="outputFormat">Formato</label>
                 <select id="outputFormat">
                   <option value="image/jpeg">JPEG</option>
                   <option value="image/png">PNG</option>
                   <option value="image/webp">WEBP</option>
                 </select>
               </div>
-              <div class="field-group" id="qualityGroup">
-                <label for="quality">Calidad JPEG/WEBP: <span id="qualityValue">90</span>%</label>
-                <input type="range" id="quality" min="1" max="100" value="90">
+              <div class="input-pair" id="qualityGroup">
+                <label for="quality">Calidad <span id="qualityValue">100</span>%</label>
+                <input type="range" id="quality" min="80" max="100" value="100">
               </div>
             </div>
 
-            <div class="action-group">
-              <button id="btnBackUpload" class="btn btn--secondary">← Volver</button>
-              <button id="btnPreview" class="btn btn--primary">Generar vista previa</button>
-            </div>
-          </div>
-
-          <div class="preview-area">
-            <div class="canvas-wrapper" id="canvasWrapper">
-              <canvas id="previewCanvas"></canvas>
-              <div class="guides-overlay" id="guidesOverlay"></div>
-              <div class="canvas-placeholder" id="canvasPlaceholder">
-                <p>La vista previa aparecerá aquí</p>
-              </div>
-            </div>
-            <div class="preview-info" id="previewInfo">
-              <span id="originalSize">—</span>
-              <span id="targetSize">—</span>
-              <span id="totalParts">—</span>
+            <!-- Actions row -->
+            <div class="toolbar-row toolbar-row--actions">
+              <button id="btnBackUpload" class="btn btn--secondary btn--sm">Cambiar imagen</button>
+              <button id="btnPreview" class="btn btn--primary btn--sm">Dividir y descargar</button>
             </div>
           </div>
         </div>
@@ -141,37 +130,22 @@
 
       <!-- STEP 3: DOWNLOAD -->
       <section id="stepDownload" class="step">
-        <div class="step-header">
-          <span class="step-number">3</span>
-          <h2 class="step-title">Descarga las partes</h2>
-          <p class="step-desc">Revisa el resultado y descarga todas las partes individuales o en un archivo ZIP.</p>
-        </div>
-
         <div class="download-layout">
-          <div class="download-controls">
-            <button id="btnBackConfig" class="btn btn--secondary">← Volver</button>
-            <button id="btnDownloadAll" class="btn btn--primary">📦 Descargar ZIP</button>
+          <div class="download-header">
+            <button id="btnBackConfig" class="btn btn--secondary btn--sm">← Editar</button>
+            <button id="btnDownloadAll" class="btn btn--primary btn--sm">Descargar ZIP</button>
           </div>
-          <div class="parts-grid" id="partsGrid">
-            <!-- Generated thumbnails injected by JS -->
-          </div>
+          <div class="parts-grid" id="partsGrid"></div>
         </div>
       </section>
     </main>
 
     <footer class="app-footer">
-      <p>ImgDivider — Procesamiento 100% offline. Tu imagen nunca sale de tu dispositivo.</p>
-      <p class="footer-links">
-        <a href="https://github.com/aaangelmartin/imgdivider" target="_blank" rel="noopener">GitHub</a>
-      </p>
+      <p>ImgDivider — 100% offline · Tu imagen nunca sale de tu dispositivo</p>
     </footer>
   </div>
 
-  <!-- Toast container -->
   <div class="toast-container" id="toastContainer"></div>
-
-  <!-- Hidden canvases for processing -->
-  <canvas id="processCanvas" style="display:none;"></canvas>
 
   <script src="src/js/vendor/jszip.min.js"></script>
   <script type="module" src="src/js/app.js"></script>
