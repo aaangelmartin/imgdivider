@@ -14,6 +14,8 @@ export class UIController {
     this.currentPresetId = 'instagram-post';
     this.parts = [];
     this.previewDebounceTimer = null;
+    this.baseWidth = 1080;
+    this.baseHeight = 1350;
 
     this.cacheDOM();
     this.bindEvents();
@@ -39,6 +41,7 @@ export class UIController {
       quality: document.getElementById('quality'),
       qualityValue: document.getElementById('qualityValue'),
       qualityGroup: document.getElementById('qualityGroup'),
+      multiplier: document.getElementById('multiplier'),
       btnBackUpload: document.getElementById('btnBackUpload'),
       btnPreview: document.getElementById('btnPreview'),
       btnBackConfig: document.getElementById('btnBackConfig'),
@@ -86,6 +89,13 @@ export class UIController {
       input.addEventListener('input', () => this.debouncedPreview());
       input.addEventListener('change', () => this.debouncedPreview());
     });
+
+    // Multiplier changes base dimensions and updates inputs
+    this.dom.multiplier.addEventListener('change', () => this.applyMultiplier());
+
+    // When user manually edits width/height, update base dims so multiplier still works
+    this.dom.targetWidth.addEventListener('change', () => this.updateBaseFromInputs());
+    this.dom.targetHeight.addEventListener('change', () => this.updateBaseFromInputs());
 
     // Quality label update + preview
     this.dom.quality.addEventListener('input', () => {
@@ -190,8 +200,15 @@ export class UIController {
       chip.classList.toggle('preset-chip--active', chip.dataset.id === id);
     });
 
-    if (preset.targetWidth) this.dom.targetWidth.value = preset.targetWidth;
-    if (preset.targetHeight) this.dom.targetHeight.value = preset.targetHeight;
+    // Store base dimensions from preset
+    this.baseWidth = preset.targetWidth || parseInt(this.dom.targetWidth.value, 10) || 1080;
+    this.baseHeight = preset.targetHeight || parseInt(this.dom.targetHeight.value, 10) || 1350;
+
+    // Apply current multiplier to base dims
+    const mult = parseInt(this.dom.multiplier.value, 10) || 1;
+    this.dom.targetWidth.value = this.baseWidth * mult;
+    this.dom.targetHeight.value = this.baseHeight * mult;
+
     this.dom.cols.value = preset.cols === 'auto' ? 1 : preset.cols;
     this.dom.rows.value = preset.rows;
     this.dom.scaleMode.value = preset.scaleMode;
@@ -203,6 +220,21 @@ export class UIController {
     this.dom.qualityGroup.style.display = isLossy ? 'flex' : 'none';
 
     if (this.currentFile) this.updatePreview();
+  }
+
+  applyMultiplier() {
+    const mult = parseInt(this.dom.multiplier.value, 10) || 1;
+    this.dom.targetWidth.value = this.baseWidth * mult;
+    this.dom.targetHeight.value = this.baseHeight * mult;
+    if (this.currentFile) this.debouncedPreview();
+  }
+
+  updateBaseFromInputs() {
+    const mult = parseInt(this.dom.multiplier.value, 10) || 1;
+    const w = parseInt(this.dom.targetWidth.value, 10);
+    const h = parseInt(this.dom.targetHeight.value, 10);
+    if (w && mult) this.baseWidth = Math.round(w / mult);
+    if (h && mult) this.baseHeight = Math.round(h / mult);
   }
 
   getConfig() {

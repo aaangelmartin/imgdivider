@@ -354,6 +354,7 @@ body {
 }
 
 .input-pair--small input { width: 56px; text-align: center; }
+.input-pair--small select { width: 56px; }
 
 .input-pair input[type="range"] {
   width: 100px;
