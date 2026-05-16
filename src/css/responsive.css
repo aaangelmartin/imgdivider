@@ -1,0 +1,147 @@
+/* =============================================
+   ImgDivider — Responsive & Touch
+   ============================================= */
+
+@media (max-width: 960px) {
+  .config-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .preview-area {
+    position: static;
+    order: -1;
+  }
+
+  .canvas-wrapper {
+    min-height: 260px;
+  }
+}
+
+@media (max-width: 680px) {
+  .app-header {
+    padding: 0 18px;
+    height: 60px;
+  }
+
+  .logo-text {
+    font-size: 1.15rem;
+  }
+
+  .app-main {
+    padding: 18px;
+  }
+
+  .step-header {
+    margin-bottom: 20px;
+  }
+
+  .step-title {
+    font-size: 1.4rem;
+  }
+
+  .upload-zone {
+    padding: 36px 18px;
+  }
+
+  .preset-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .preset-card {
+    padding: 14px 10px;
+  }
+
+  .field-group--inline {
+    gap: 10px;
+  }
+
+  .action-group {
+    flex-direction: column;
+  }
+
+  .action-group .btn {
+    width: 100%;
+  }
+
+  .parts-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .download-controls {
+    flex-direction: column;
+  }
+
+  .download-controls .btn {
+    width: 100%;
+  }
+
+  .toast-container {
+    left: 18px;
+    right: 18px;
+    bottom: 18px;
+  }
+
+  .toast {
+    max-width: none;
+  }
+}
+
+@media (max-width: 400px) {
+  .preset-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .parts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Touch-friendly */
+@media (pointer: coarse) {
+  .btn {
+    min-height: 48px;
+  }
+
+  .preset-card {
+    min-height: 64px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  input, select {
+    font-size: 16px !important;
+  }
+
+  .icon-btn {
+    width: 46px;
+    height: 46px;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --border: rgba(255, 255, 255, 0.3);
+    --border-strong: rgba(255, 255, 255, 0.5);
+  }
+
+  [data-theme="light"] {
+    --border: rgba(0, 0, 0, 0.25);
+    --border-strong: rgba(0, 0, 0, 0.4);
+  }
+}
